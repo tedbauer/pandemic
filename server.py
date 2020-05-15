@@ -24,17 +24,18 @@ class Deck:
 
 class Server:
     def __init__(self):
-        host = socket.gethostbyname(socket.gethostname())  # returns MY IP address
-        port = 1066  # assigned randomly, any number of 1032
+        port = 1067  # assigned randomly, any number of 1032
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # opening a TCP connection
-        s.bind((host, port))  # telling the socket to use our host and port that we specified
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(('', port))  # telling the socket to use our host and port that we specified
         s.listen(1)  # only allowing one connection
-        print(host + " listening on port " + str(port))
+        print("listening on port " + str(port))
         conn, addr = s.accept()
-        print("Connection formed" + conn)
+        print("Connection formed" + str(conn))
         while True:
             data = conn.recv(1024)  # getting data from the connection; getting in chunks of 1024 max; loops to get more data
             if not data: break
+            print("msg from client: " + str(data))
             conn.sendall(data)
         conn.close()
 
