@@ -18,13 +18,33 @@ class Deck:
             self.deck = [Card(row[0], row[1]) for row in reader]
 
     def draw_card(self):
-        card = random.choice(self.cards)
-        self.cards.remove(card)
+        card = random.choice(self.deck)
+        self.deck.remove(card)
         return card
+
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.hand = []
+
+class GameState:
+    def __init__(self, players):
+        self.players = players # list of Player objects
+        self.deck = Deck()
+
+        if len(players) == 2:
+            for player in players:
+                for _ in range(4): player.hand.append(self.deck.draw_card())
+        elif len(players) == 3:
+            for player in players:
+                for _ in range(3): player.hand.append(self.deck.draw_card())
+        elif len(players) == 4:
+            for player in players:
+                for _ in range(2): player.hand.append(self.deck.draw_card())
 
 class Server:
     def __init__(self):
-        port = 1067  # assigned randomly, any number of 1032
+        port = 1066  # assigned randomly, any number of 1032
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # opening a TCP connection
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('', port))  # telling the socket to use our host and port that we specified
@@ -38,7 +58,3 @@ class Server:
             print("msg from client: " + str(data))
             conn.sendall(data)
         conn.close()
-
-
-
-s = Server()
