@@ -41,6 +41,10 @@ class GameState:
         with self.lock:
             self.players.append(player)
 
+    def remove_player(self, player):
+        with self.lock:
+            self.players.remove(player)
+
     def start_game(self):
         with self.lock:
             self.is_game_mode = True
@@ -79,6 +83,10 @@ class ClientThread(Thread):
             if not new_data:
                 break
         self.conn.close()
+        for player in self.state.players:
+            print(player.name)
+        player = next(p for p in self.state.players if p.name == str(self.player_nbr))
+        self.state.remove_player(player)
 
 class Server:
     def __init__(self):
