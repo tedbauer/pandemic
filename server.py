@@ -1,7 +1,8 @@
 import random
 import csv
 import socket
-from threading import Thread
+import jsonpickle
+from threading import Thread, Lock
 
 # deal cards to beginning players
 # 2-4 players; each player gets a deck of cards
@@ -34,15 +35,19 @@ class GameState:
         self.is_game_mode = False
         self.deck = Deck()
 
+        self.lock = Lock()
+
     def add_player(self, player):
-        self.players.append(player)
+        with self.lock:
+            self.players.append(player)
 
     def start_game(self):
-        self.is_game_mode = True
-        size_init_hand = 4 if len(self.players) == 2 else 3 if len(self.players) == 3 else 2
-        for player in self.players:
-            for _ in range(size_init_hand): player.hand.append(self.deck.draw_card())
-
+        with self.lock:
+            self.is_game_mode = True
+            size_init_hand = 4 if len(self.players) == 2 else 3 if len(self.players) == 3 else 2
+            for player in self.players:
+                for _ in range(size_init_hand):
+                    player.hand.append(self.deck.draw_card())
 
 class ClientThread(Thread):
     def __init__(self, conn, addr, state, player_nbr):
@@ -53,25 +58,40 @@ class ClientThread(Thread):
         self.player_nbr = player_nbr
 
     def run(self):
-        while not self.state.is_game_mode:
-            data = self.conn.recv(1024)
-            print(data.decode().strip())
-            if not data:
+        data_buffer = b''
+        while True:
+            print(data_buffer)
+            new_data = self.conn.recv(1024)
+            print(new_data)
+            data_buffer += new_data
+            if b'\0' in data_buffer:
+                message_buffer = data_buffer[:data_buffer.rfind(b'\0')]
+                messages = message_buffer.split(b'\0')
+                data_buffer = data_buffer[data_buffer.rfind(b'\0'):]
+                for msg in messages:
+                    print(msg)
+                    if msg.decode() == "start" and not self.state.is_game_mode:
+                        print("starting game")
+                        self.state.start_game()
+                    elif msg.decode() == "read":
+                        print("performing read")
+                        self.conn.sendall((jsonpickle.encode(self.state) + '\0').encode())
+            if not new_data:
                 break
-            if data.decode().strip() == "Start":
-                self.state.start_game()
-
-        self.conn.sendall(str([card.city_name for card in self.state.players[self.player_nbr].hand]).encode())
         self.conn.close()
 
 class Server:
     def __init__(self):
-        port = 1066  # assigned randomly, any number of 1032
+        PORT = 1066  # assigned randomly, any number of 1032
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # opening a TCP connection
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('', port))  # telling the socket to use our host and port that we specified
+
+        s.bind(('', PORT))  # telling the socket to use our host and port that we specified
         s.listen()  # only allowing one connection
-        print("listening on port " + str(port))
+
+        print("listening on port " + str(PORT))
+
         num_conn = 0
         threads = []
         state = GameState()
