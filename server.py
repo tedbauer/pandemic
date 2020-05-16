@@ -1,6 +1,7 @@
 import random
 import csv
 import socket
+from threading import Thread
 
 # deal cards to beginning players
 # 2-4 players; each player gets a deck of cards
@@ -28,19 +29,39 @@ class Player:
         self.hand = []
 
 class GameState:
-    def __init__(self, players):
-        self.players = players # list of Player objects
+    def __init__(self):
+        self.players = [] # list of Player objects
+        self.is_game_mode = False
         self.deck = Deck()
 
-        if len(players) == 2:
-            for player in players:
-                for _ in range(4): player.hand.append(self.deck.draw_card())
-        elif len(players) == 3:
-            for player in players:
-                for _ in range(3): player.hand.append(self.deck.draw_card())
-        elif len(players) == 4:
-            for player in players:
-                for _ in range(2): player.hand.append(self.deck.draw_card())
+    def add_player(self, player):
+        self.player.append(player)
+
+    def start_game(self):
+        self.is_game_mode = True
+        size_init_hand = 4 if len(self.player) == 2 else 3 if len(self.player) == 3 else 2
+        for player in self.players:
+            for _ in range(size_init_hand): player.hand.append(self.deck.draw_card())
+
+
+class ClientThread(Thread):
+    def __init__(self, conn, addr, state, player_nbr):
+        Thread.__init__(self)
+        self.conn = conn
+        self.addr = addr
+        self.state = state
+        self.player_nbr = player_nbr
+
+    def run(self):
+        while not self.state.is_game_mode:
+            data = self.conn.recv(1024)
+            if not data:
+                break
+            if str(data) == "Start":
+                self.state.start_game()
+
+        self.conn.sendall(str([card.city_name for card in self.state.players[self.player_nbr].hand]).encode())
+        self.conn.close()
 
 class Server:
     def __init__(self):
@@ -48,13 +69,17 @@ class Server:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # opening a TCP connection
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('', port))  # telling the socket to use our host and port that we specified
-        s.listen(1)  # only allowing one connection
+        s.listen()  # only allowing one connection
         print("listening on port " + str(port))
-        conn, addr = s.accept()
-        print("Connection formed" + str(conn))
-        while True:
-            data = conn.recv(1024)  # getting data from the connection; getting in chunks of 1024 max; loops to get more data
-            if not data: break
-            print("msg from client: " + str(data))
-            conn.sendall(data)
-        conn.close()
+        num_conn = 0
+        threads = []
+        state = GameState()
+        while not state.is_game_mode:
+            conn, addr = s.accept()
+            print("Connection formed" + str(conn))
+            t = ClientThread(conn, addr, state, num_conn)
+            t.start()
+            threads.append(t)
+            num_conn += 1
+
+s = Server()
