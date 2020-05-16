@@ -35,11 +35,11 @@ class GameState:
         self.deck = Deck()
 
     def add_player(self, player):
-        self.player.append(player)
+        self.players.append(player)
 
     def start_game(self):
         self.is_game_mode = True
-        size_init_hand = 4 if len(self.player) == 2 else 3 if len(self.player) == 3 else 2
+        size_init_hand = 4 if len(self.players) == 2 else 3 if len(self.players) == 3 else 2
         for player in self.players:
             for _ in range(size_init_hand): player.hand.append(self.deck.draw_card())
 
@@ -55,9 +55,10 @@ class ClientThread(Thread):
     def run(self):
         while not self.state.is_game_mode:
             data = self.conn.recv(1024)
+            print(data.decode().strip())
             if not data:
                 break
-            if str(data) == "Start":
+            if data.decode().strip() == "Start":
                 self.state.start_game()
 
         self.conn.sendall(str([card.city_name for card in self.state.players[self.player_nbr].hand]).encode())
@@ -78,6 +79,7 @@ class Server:
             conn, addr = s.accept()
             print("Connection formed" + str(conn))
             t = ClientThread(conn, addr, state, num_conn)
+            state.add_player(Player(str(num_conn)))
             t.start()
             threads.append(t)
             num_conn += 1
