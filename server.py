@@ -45,8 +45,6 @@ class RoleCardDeck:
         self.role.remove(r)
         return r
 
-
-
 class GameState:
     def __init__(self):
         self.players = [] # list of Player objects
@@ -115,5 +113,12 @@ class Server:
             t.start()
             threads.append(t)
             num_conn += 1
+
+            if num_conn == 4:
+                state.start_game()
+
+        print("done accepting connections!")
+        while True:
+            continue
 
 s = Server()
