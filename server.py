@@ -1,3 +1,4 @@
+import conn
 import random
 import csv
 import socket
@@ -62,31 +63,17 @@ class ClientThread(Thread):
         self.player_nbr = player_nbr
 
     def run(self):
-        data_buffer = b''
         while True:
-            print(data_buffer)
-            new_data = self.conn.recv(1024)
-            print(new_data)
-            data_buffer += new_data
-            if b'\0' in data_buffer:
-                message_buffer = data_buffer[:data_buffer.rfind(b'\0')]
-                messages = message_buffer.split(b'\0')
-                data_buffer = data_buffer[data_buffer.rfind(b'\0'):]
-                for msg in messages:
-                    print(msg)
-                    if msg.decode() == "start" and not self.state.is_game_mode:
-                        print("starting game")
-                        self.state.start_game()
-                    elif msg.decode() == "read":
-                        print("performing read")
-                        self.conn.sendall((jsonpickle.encode(self.state) + '\0').encode())
-            if not new_data:
-                break
-        self.conn.close()
-        for player in self.state.players:
-            print(player.name)
-        player = next(p for p in self.state.players if p.name == str(self.player_nbr))
-        self.state.remove_player(player)
+            try:
+                message = conn.receive_message(self.conn)
+                if message.decode() == "start" and not self.state.is_game_mode:
+                    self.state.start_game()
+                elif message.decode() == "read":
+                    conn.send_message(self.conn, jsonpickle.encode(self.state).encode())
+            except conn.ConnectionClosed:
+                player = next(p for p in self.state.players if p.name == str(self.player_nbr))
+                self.state.remove_player(player)
+
 
 class Server:
     def __init__(self):
