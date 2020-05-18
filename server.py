@@ -30,6 +30,23 @@ class Player:
         self.name = name
         self.hand = []
 
+class RoleCard:
+    def __init__(self, role_type):
+        self.role_type = role_type
+
+class RoleCardDeck:
+    def __init__(self):
+        with open("assets/RoleCards.csv", newline="") as role_card_file:
+            reader = csv.reader(role_card_file)
+            self.role = [RoleCard(row[0]) for row in reader]
+
+    def draw_role(self):
+        r = random.choice(self.role)
+        self.role.remove(r)
+        return r
+
+
+
 class GameState:
     def __init__(self):
         self.players = [] # list of Player objects
