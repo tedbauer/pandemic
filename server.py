@@ -4,98 +4,39 @@ import csv
 import socket
 import jsonpickle
 from threading import Thread, Lock
+import gamestate
 
 # deal cards to beginning players
 # 2-4 players; each player gets a deck of cards
 
-class Card:
-    def __init__(self, city_name, color):
-        self.color = color
-        self.city_name = city_name
-
-class Deck:
-    def __init__(self):
-        with open("assets/CityCard_Types.csv", newline="") as city_color_file:
-            reader = csv.reader(city_color_file, delimiter=",")
-            next(reader)
-            self.deck = [Card(row[0], row[1]) for row in reader]
-
-    def draw_card(self):
-        card = random.choice(self.deck)
-        self.deck.remove(card)
-        return card
-
-class Player:
-    def __init__(self, name):
-        self.name = name
-        self.hand = []
-        self.role =[]
-
-class RoleCard:
-    def __init__(self, role_type):
-        self.role_type = role_type
-
-class RoleCardDeck:
-    def __init__(self):
-        with open("assets/RoleCards.csv", newline="") as role_card_file:
-            reader = csv.reader(role_card_file)
-            self.role = [RoleCard(row[0]) for row in reader]
-
-    def draw_role(self):
-        r = random.choice(self.role)
-        self.role.remove(r)
-        return r
-
-class GameState:
-    def __init__(self):
-        self.players = [] # list of Player objects
-        self.is_game_mode = False
-        self.deck = Deck()
-        self.rolecarddeck = RoleCardDeck()
-
-        self.lock = Lock()
-
-    def add_player(self, player):
-        with self.lock:
-            self.players.append(player)
-
-    def remove_player(self, player):
-        with self.lock:
-            self.players.remove(player)
-
-    def start_game(self):
-        with self.lock:
-            self.is_game_mode = True
-            size_init_hand = 4 if len(self.players) == 2 else 3 if len(self.players) == 3 else 2
-            for player in self.players:
-                for _ in range(size_init_hand):
-                    player.hand.append(self.deck.draw_card())
-            player.role = self.rolecarddeck.draw_role()
+state_lock = Lock()
+state = gamestate.GameState()
 
 class ClientThread(Thread):
-    def __init__(self, conn, addr, state):
+    def __init__(self, conn, addr):
         Thread.__init__(self)
         self.conn = conn
         self.addr = addr
-        self.state = state
         self.player_name = None
-
 
     def run(self):
         while True:
             try:
                 message = conn.receive_message(self.conn)
-                if message.decode() == "start" and not self.state.is_game_mode:
-                    self.state.start_game()
+                if message.decode() == "start" and not state.is_game_mode:
+                    with state_lock:
+                        gamestate.start_game(state)
                 elif message.decode().startswith("setname"):
                     self.player_name = message.decode()[8:]
-                    self.state.add_player(Player(self.player_name))
+                    with state_lock:
+                        gamestate.add_player(state, gamestate.Player(self.player_name))
                 elif message.decode() == "read":
-                    conn.send_message(self.conn, jsonpickle.encode(self.state).encode())
+                    with state_lock:
+                        conn.send_message(self.conn, jsonpickle.encode(state).encode())
             except conn.ConnectionClosed:
-                player = next(p for p in self.state.players if p.name == str(self.player_nbr))
-                self.state.remove_player(player)
-
+                with state_lock:
+                    player = next(p for p in state.players if p.name == str(self.player_name))
+                    gamestate.remove_player(state, player)
 
 class Server:
     def __init__(self):
@@ -111,17 +52,16 @@ class Server:
 
         num_conn = 0
         threads = []
-        state = GameState()
         while not state.is_game_mode:
             conn, addr = s.accept()
             print("Connection formed" + str(conn))
-            t = ClientThread(conn, addr, state)
+            t = ClientThread(conn, addr)
             t.start()
             threads.append(t)
             num_conn += 1
 
             if num_conn == 2:
-                state.start_game()
+                gamestate.start_game(state)
 
         print("done accepting connections!")
         while True:

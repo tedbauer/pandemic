@@ -22,13 +22,13 @@ class Client:
 
             game_state = jsonpickle.decode(conn.receive_message(self.socket))
 
-            players = game_state["players"]
+            players = game_state.players
 
-            if not game_state["is_game_mode"]:
+            if not game_state.is_game_mode:
                 text_surface = font.render("Lobby", True, (255,255,255))
                 screen.blit(text_surface, dest=(5, 5))
                 for i in range(len(players)):
-                    text_surface = font.render("- player " + players[i]["name"], True, (255,255,255))
+                    text_surface = font.render("- player " + players[i].name, True, (255,255,255))
                     screen.blit(text_surface, dest=(50, 50+i*50))
 
             else:
@@ -39,11 +39,11 @@ class Client:
                 pygame.draw.rect(screen, (255,255,255), (750, 200, 200, 50))
 
                 for i, player in enumerate(players):
-                    text_surface = font.render("player " + str(player["name"]) + "'s hand:", True, (255,255,255))
+                    text_surface = font.render("player " + str(player.name) + "'s hand:", True, (255,255,255))
                     screen.blit(text_surface, dest=(50+i*175, 50))
-                    for j, card in enumerate(player["hand"]):
+                    for j, card in enumerate(player.hand):
                         #if card["color"] == "Blue":
-                        card_text_surface = font.render(card["city_name"] + "||" + card["color"], True, (255, 255, 255))
+                        card_text_surface = font.render(card.city_name + "||" + card.color, True, (255, 255, 255))
                         screen.blit(card_text_surface, dest=(50+i*175, 100+j*50))
 
             pygame.display.flip()
