@@ -7,7 +7,7 @@ Install dependencies:
 	$ pip3 install pygame
 	$ pip3 install jsonpickle
 
-# Run the Game
+## Run the Game
 
 Run the server:
 
