@@ -1,4 +1,5 @@
 import csv
+import random
 
 class Card:
     def __init__(self, city_name, color):
@@ -53,8 +54,8 @@ def remove_player(state, player):
 
 def start_game(state):
     state.is_game_mode = True
-    size_init_hand = 4 if len(self.players) == 2 else 3 if len(self.players) == 3 else 2
-    for player in self.players:
-        player.role = self.rolecarddeck.draw_role()
+    size_init_hand = 4 if len(state.players) == 2 else 3 if len(state.players) == 3 else 2
+    for player in state.players:
+        player.role = state.rolecarddeck.draw_role()
         for _ in range(size_init_hand):
-            player.hand.append(self.deck.draw_card())
+            player.hand.append(state.deck.draw_card())

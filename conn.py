@@ -22,13 +22,12 @@ def receive_message(socket):
         msg_size_buffer += msg_size_chunk
         num_size_bytes_recvd += len(msg_size_chunk)
 
-
     msg_size = int.from_bytes(msg_size_buffer, "big")
     print("Size was" + str(msg_size))
     num_msg_bytes_recvd = 0
     msg_buffer = b''
     while num_msg_bytes_recvd < msg_size:
-        msg_chunk = socket.recv(msg_size)
+        msg_chunk = socket.recv(msg_size - num_msg_bytes_recvd)
         print(msg_chunk)
         if not msg_chunk:
             socket.close()

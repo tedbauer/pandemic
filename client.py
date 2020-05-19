@@ -34,13 +34,11 @@ class Client:
             else:
 
                 pygame.draw.rect(screen, (255,255,255), (50, 920, 900, 50))
-                pygame.draw.rect(screen, (255,255,255), (750, 50, 200, 50))
-                pygame.draw.rect(screen, (255,255,255), (750, 125, 200, 50))
-                pygame.draw.rect(screen, (255,255,255), (750, 200, 200, 50))
 
-                for i, player in enumerate(players):
-                    text_surface = font.render("player " + str(player.name) + "'s hand:", True, (255,255,255))
-                    screen.blit(text_surface, dest=(50+i*175, 50))
+                for i, player in enumerate(filter(lambda p: p.name != name,players)):
+                    text_surface = font.render(str(player.name), True, (255,255,255))
+                    screen.blit(text_surface, dest=(650, 50 + 75*i))
+                    pygame.draw.rect(screen, (255,255,255), (750, 50 + 75*i, 200, 50))
                     for j, card in enumerate(player.hand):
                         #if card["color"] == "Blue":
                         card_text_surface = font.render(card.city_name + "||" + card.color, True, (255, 255, 255))
