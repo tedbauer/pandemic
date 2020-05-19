@@ -30,6 +30,8 @@ class ClientThread(Thread):
                     self.player_name = message.decode()[8:]
                     with state_lock:
                         gamestate.add_player(state, gamestate.Player(self.player_name))
+                        if len(state.players) == 3:
+                            gamestate.start_game(state)
                 elif message.decode() == "read":
                     with state_lock:
                         conn.send_message(self.conn, jsonpickle.encode(state).encode())
@@ -59,9 +61,6 @@ class Server:
             t.start()
             threads.append(t)
             num_conn += 1
-
-            if num_conn == 2:
-                gamestate.start_game(state)
 
         print("done accepting connections!")
         while True:
