@@ -5,13 +5,14 @@ import jsonpickle
 
 class Client:
 
-    def __init__(self, ip):
+    def __init__(self, ip, name):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((ip, 1066))
 
         pygame.init()
-        screen = pygame.display.set_mode((1280, 960))
+        screen = pygame.display.set_mode((1000, 800))
         screen.fill((0,0,0))
+        conn.send_message(self.socket, b'setname:' + name.encode())
         font = pygame.font.Font(pygame.font.get_default_font(), 18)
 
         running = True
@@ -32,10 +33,16 @@ class Client:
 
             else:
 
+                pygame.draw.rect(screen, (255,255,255), (50, 920, 900, 50))
+                pygame.draw.rect(screen, (255,255,255), (750, 50, 200, 50))
+                pygame.draw.rect(screen, (255,255,255), (750, 125, 200, 50))
+                pygame.draw.rect(screen, (255,255,255), (750, 200, 200, 50))
+
                 for i, player in enumerate(players):
                     text_surface = font.render("player " + str(player["name"]) + "'s hand:", True, (255,255,255))
                     screen.blit(text_surface, dest=(50+i*175, 50))
                     for j, card in enumerate(player["hand"]):
+                        #if card["color"] == "Blue":
                         card_text_surface = font.render(card["city_name"] + "||" + card["color"], True, (255, 255, 255))
                         screen.blit(card_text_surface, dest=(50+i*175, 100+j*50))
 
@@ -47,4 +54,5 @@ class Client:
 
 if __name__ == '__main__':
     ip = 'localhost'
-    client = Client(ip)
+    name = input('enter your name')
+    client = Client(ip, name)

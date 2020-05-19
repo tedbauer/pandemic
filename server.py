@@ -29,6 +29,7 @@ class Player:
     def __init__(self, name):
         self.name = name
         self.hand = []
+        self.role =[]
 
 class RoleCard:
     def __init__(self, role_type):
@@ -50,6 +51,7 @@ class GameState:
         self.players = [] # list of Player objects
         self.is_game_mode = False
         self.deck = Deck()
+        self.rolecarddeck = RoleCardDeck()
 
         self.lock = Lock()
 
@@ -68,14 +70,16 @@ class GameState:
             for player in self.players:
                 for _ in range(size_init_hand):
                     player.hand.append(self.deck.draw_card())
+            player.role = self.rolecarddeck.draw_role()
 
 class ClientThread(Thread):
-    def __init__(self, conn, addr, state, player_nbr):
+    def __init__(self, conn, addr, state):
         Thread.__init__(self)
         self.conn = conn
         self.addr = addr
         self.state = state
-        self.player_nbr = player_nbr
+        self.player_name = None
+
 
     def run(self):
         while True:
@@ -83,6 +87,9 @@ class ClientThread(Thread):
                 message = conn.receive_message(self.conn)
                 if message.decode() == "start" and not self.state.is_game_mode:
                     self.state.start_game()
+                elif message.decode().startswith("setname"):
+                    self.player_name = message.decode()[8:]
+                    self.state.add_player(Player(self.player_name))
                 elif message.decode() == "read":
                     conn.send_message(self.conn, jsonpickle.encode(self.state).encode())
             except conn.ConnectionClosed:
@@ -108,13 +115,12 @@ class Server:
         while not state.is_game_mode:
             conn, addr = s.accept()
             print("Connection formed" + str(conn))
-            t = ClientThread(conn, addr, state, num_conn)
-            state.add_player(Player(str(num_conn)))
+            t = ClientThread(conn, addr, state)
             t.start()
             threads.append(t)
             num_conn += 1
 
-            if num_conn == 4:
+            if num_conn == 2:
                 state.start_game()
 
         print("done accepting connections!")
