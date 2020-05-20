@@ -30,12 +30,24 @@ class Client:
 
             players = game_state.players
 
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            mouse_in_button = mouse_x > 50 and mouse_x < 150 and mouse_y > 500 and mouse_y < 570
+
             if not game_state.is_game_mode:
                 text_surface = font.render("Lobby", True, (255,255,255))
                 screen.blit(text_surface, dest=(5, 5))
                 for i in range(len(players)):
                     text_surface = font.render("- player " + players[i].name, True, (255,255,255))
                     screen.blit(text_surface, dest=(50, 50+i*50))
+
+                if mouse_in_button:
+                    button_color = (50, 50, 50)
+                else:
+                    button_color = WHITE
+
+                pygame.draw.rect(screen, button_color, (50, 500, 100, 70))
+                text_surface = font.render("Start Game", True, GREEN)
+                screen.blit(text_surface, dest=(60, 510))
 
             else:
 
@@ -76,6 +88,9 @@ class Client:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if mouse_in_button: conn.send_message(self.socket, b'start')
+
 
 if __name__ == '__main__':
     ip = 'localhost'
