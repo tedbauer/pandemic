@@ -9,6 +9,9 @@ GREEN  = (0, 255, 0)
 BLACK  = (0, 0, 0)
 WHITE  = (255, 255, 255)
 
+def lerp(start, end, smooth):
+    return start + smooth * (end - start)
+
 class Client:
 
     def __init__(self, ip, name):
@@ -20,6 +23,12 @@ class Client:
         screen.fill((20,20,20))
         conn.send_message(self.socket, b'setname:' + name.encode())
         font = pygame.font.Font(pygame.font.get_default_font(), 10)
+
+        curr_offset = 0
+
+        end_offset = 0
+
+        first_game_mode_iter = True
 
         running = True
         while running:
@@ -51,6 +60,11 @@ class Client:
 
             else:
 
+                if first_game_mode_iter:
+                    first_game_mode_iter = False
+                    end_offsets = [0 for player in filter(lambda p: p.name != name, players)]
+                    curr_offsets = [0 for player in filter(lambda p: p.name != name, players)]
+
                 pygame.draw.rect(screen, (255,255,255), (100, 650, 700, 100))
                 my_hand = next(p for p in players if p.name == name).hand
                 for i, card in enumerate(my_hand):
@@ -67,9 +81,10 @@ class Client:
                     screen.blit(my_card_text_surface, dest=(110 + 90*i, 660))
 
                 for i, player in enumerate(filter(lambda p: p.name != name,players)):
+                    curr_offsets[i] = lerp(curr_offsets[i], end_offsets[i], 0.1)
                     text_surface = font.render(str(player.name), True, (255,255,255))
-                    screen.blit(text_surface, dest=(550, 70 + 120*i))
-                    pygame.draw.rect(screen, (255,255,255), (600, 50 + 120*i, 400, 100))
+                    screen.blit(text_surface, dest=(curr_offsets[i] + 550, 70 + 120*i))
+                    pygame.draw.rect(screen, (255,255,255), (curr_offsets[i] + 600, 50 + 120*i, 400, 100))
                     for j, card in enumerate(player.hand):
                         if card.color == "Blue":
                             color = BLUE
@@ -79,9 +94,9 @@ class Client:
                             color = GREEN
                         else:
                             color = BLACK
-                        pygame.draw.rect(screen, color, (620 + 90 * j, 60 + 120*i, 80, 80))
+                        pygame.draw.rect(screen, color, (curr_offsets[i] + 620 + 90 * j, 60 + 120*i, 80, 80))
                         card_text_surface = font.render(card.city_name, True, (100, 100, 100))
-                        screen.blit(card_text_surface, dest=(620 + 90 * j, 60 + 120*i))
+                        screen.blit(card_text_surface, dest=(curr_offsets[i] + 620 + 90 * j, 60 + 120*i))
 
             pygame.display.flip()
 
@@ -91,6 +106,10 @@ class Client:
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if mouse_in_button: conn.send_message(self.socket, b'start')
 
+                    if game_state.is_game_mode:
+                        for i, player in enumerate(filter(lambda p: p.name != name,players)):
+                            if mouse_x > 550 and mouse_y > 50 + 120*i and mouse_y < 50 + 120*i + 100:
+                                end_offsets[i] = 0 if end_offsets[i] == 400 else 400
 
 if __name__ == '__main__':
     ip = 'localhost'
