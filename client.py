@@ -2,15 +2,24 @@ import conn
 import socket
 import pygame
 import jsonpickle
+import random
 
 BLUE   = (0, 0, 255)
 YELLOW = (255, 255, 0)
 GREEN  = (0, 255, 0)
 BLACK  = (0, 0, 0)
 WHITE  = (255, 255, 255)
+NODEPOSITIONS   = dict()
 
 def lerp(start, end, smooth):
     return start + smooth * (end - start)
+
+def draw_neighbors(screen_object, node, seen):
+    seen.add(node)
+    for neighbor in node.neighbors:
+        if neighbor not in seen:
+            pygame.draw.line(screen_object, WHITE, NODEPOSITIONS[node.city_name], NODEPOSITIONS[neighbor.city_name])
+            draw_neighbors(screen_object, neighbor, seen)
 
 class Client:
 
@@ -62,6 +71,10 @@ class Client:
 
                 if first_game_mode_iter:
                     first_game_mode_iter = False
+                    for node in game_state.city_nodes:
+                        x = random.randint(0, 500)
+                        y = random.randint(0, 500)
+                        NODEPOSITIONS[node.city_name] = (x, y)
                     end_offsets = [0 for player in filter(lambda p: p.name != name, players)]
                     curr_offsets = [0 for player in filter(lambda p: p.name != name, players)]
 
@@ -97,6 +110,13 @@ class Client:
                         pygame.draw.rect(screen, color, (curr_offsets[i] + 620 + 90 * j, 60 + 120*i, 80, 80))
                         card_text_surface = font.render(card.city_name, True, (100, 100, 100))
                         screen.blit(card_text_surface, dest=(curr_offsets[i] + 620 + 90 * j, 60 + 120*i))
+
+                for node in game_state.city_nodes:
+                    x, y = NODEPOSITIONS[node.city_name]
+                    pygame.draw.circle(screen, WHITE, (x, y), 5)
+                    text_surface = font.render(node.city_name, True, WHITE)
+                    screen.blit(text_surface, dest=(x+10, y+10))
+                draw_neighbors(screen, game_state.city_nodes[0], set())
 
             pygame.display.flip()
 

@@ -6,6 +6,13 @@ class Card:
         self.color = color
         self.city_name = city_name
 
+class CityNode:
+    def __init__(self, city_name, color):
+        self.color = color
+        self.city_name = city_name
+        self.neighbors = []
+
+
 class Deck:
     def __init__(self):
         with open("assets/CityCard_Types.csv", newline="") as city_color_file:
@@ -42,6 +49,7 @@ class RoleCardDeck:
 class GameState:
     def __init__(self):
         self.players = [] # list of Player objects
+        self.city_nodes = []
         self.is_game_mode = False
         self.deck = Deck()
         self.rolecarddeck = RoleCardDeck()
@@ -59,3 +67,20 @@ def start_game(state):
         player.role = state.rolecarddeck.draw_role()
         for _ in range(size_init_hand):
             player.hand.append(state.deck.draw_card())
+
+    citymap = dict()
+    with open("assets/CityCard_Types.csv", newline="") as city_color_file:
+        reader = csv.reader(city_color_file, delimiter=",")
+        next(reader)
+        for row in reader:
+            citynode = CityNode(row[0], row[1])
+            citymap[row[0]] = citynode
+            state.city_nodes.append(citynode)
+
+    with open("assets/CityNodes.csv", newline="") as city_node_file:
+        reader = csv.reader(city_node_file, delimiter=",")
+        for row in reader:
+            citymap[row[0]].neighbors.append(citymap[row[1]])
+            citymap[row[1]].neighbors.append(citymap[row[0]])
+
+
