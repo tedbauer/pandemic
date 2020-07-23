@@ -26,8 +26,9 @@ class ClientThread(Thread):
                 if message.decode() == "start" and not state.is_game_mode:
                     with state_lock:
                         gamestate.start_game(state)
-                elif message.decode().startswith("setname"):
-                    self.player_name = message.decode()[8:]
+                elif message.decode().startswith("joinlobby"):
+                    self.player_name = message.decode()[10:]
+                    print("message received: " + message.decode())
                     with state_lock:
                         gamestate.add_player(state, gamestate.Player(self.player_name))
                 elif message.decode() == "read":

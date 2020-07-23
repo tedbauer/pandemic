@@ -4,6 +4,16 @@ import pygame
 import jsonpickle
 import random
 
+import queue
+
+from client_objects import City
+from concurrent.futures import ThreadPoolExecutor
+from server_channel import ServerChannel
+
+from ui import MessageBox, Button
+
+from pygame.sprite import Group
+
 BLUE   = (0, 0, 255)
 YELLOW = (255, 255, 0)
 GREEN  = (0, 255, 0)
@@ -11,127 +21,69 @@ BLACK  = (0, 0, 0)
 WHITE  = (255, 255, 255)
 NODEPOSITIONS   = dict()
 
-def lerp(start, end, smooth):
-    return start + smooth * (end - start)
+class Scene:
+    def __init__(self, screen):
+        self.groups = []
+        self.screen = screen
 
-def draw_neighbors(screen_object, node, seen):
-    seen.add(node)
-    for neighbor in node.neighbors:
-        if neighbor not in seen:
-            pygame.draw.line(screen_object, WHITE, NODEPOSITIONS[node.city_name], NODEPOSITIONS[neighbor.city_name])
-            draw_neighbors(screen_object, neighbor, seen)
+    def update(self, server_state):
+        for group in self.groups: group.update(server_state)
+
+    def draw(self):
+        for group in self.groups:
+            group.draw(self.screen)
+        pygame.display.flip()
+
+
+class Lobby(Scene):
+    def __init__(self, screen, channel, player_name):
+        Scene.__init__(self, screen)
+
+        self.channel = channel
+        self.players = []
+
+        screen.fill(BLACK)
+
+        button_group = Group(Button(50, 50, "Start game"))
+        self.groups.append(button_group)
+
+        self.channel.join_lobby(player_name)
+
+    def update(self, server_state):
+        self.screen.fill(BLACK)
+        Scene.update(self, server_state)
+
+        self.players = list(map(lambda p: p.name, server_state.players))
+
 
 class Client:
-
     def __init__(self, ip, name):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((ip, 1066))
 
         pygame.init()
+
         screen = pygame.display.set_mode((1000, 800))
-        screen.fill((20,20,20))
-        conn.send_message(self.socket, b'setname:' + name.encode())
-        font = pygame.font.Font(pygame.font.get_default_font(), 10)
+        self.channel = ServerChannel(ip, 1066)
+        self.scene = Lobby(screen, self.channel, name)
 
-        curr_offset = 0
+        server_state = self.channel.read_new_state()
 
-        end_offset = 0
-
-        first_game_mode_iter = True
+        state_fetch_executor = ThreadPoolExecutor(max_workers=1)
+        state_fetch_future = state_fetch_executor.submit(self.channel.read_new_state)
 
         running = True
         while running:
-            screen.fill((20,20,20))
-            conn.send_message(self.socket, b'read')
+            if state_fetch_future.done():
+                server_state = state_fetch_future.result()
+                state_fetch_future = state_fetch_executor.submit(self.channel.read_new_state)
 
-            game_state = jsonpickle.decode(conn.receive_message(self.socket))
-
-            players = game_state.players
-
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            mouse_in_button = mouse_x > 50 and mouse_x < 150 and mouse_y > 500 and mouse_y < 570
-
-            if not game_state.is_game_mode:
-                text_surface = font.render("Lobby", True, (255,255,255))
-                screen.blit(text_surface, dest=(5, 5))
-                for i in range(len(players)):
-                    text_surface = font.render("- player " + players[i].name, True, (255,255,255))
-                    screen.blit(text_surface, dest=(50, 50+i*50))
-
-                if mouse_in_button:
-                    button_color = (50, 50, 50)
-                else:
-                    button_color = WHITE
-
-                pygame.draw.rect(screen, button_color, (50, 500, 100, 70))
-                text_surface = font.render("Start Game", True, GREEN)
-                screen.blit(text_surface, dest=(60, 510))
-
-            else:
-
-                if first_game_mode_iter:
-                    first_game_mode_iter = False
-                    for node in game_state.city_nodes:
-                        x = random.randint(0, 500)
-                        y = random.randint(0, 500)
-                        NODEPOSITIONS[node.city_name] = (x, y)
-                    end_offsets = [0 for player in filter(lambda p: p.name != name, players)]
-                    curr_offsets = [0 for player in filter(lambda p: p.name != name, players)]
-
-                pygame.draw.rect(screen, (255,255,255), (100, 650, 700, 100))
-                my_hand = next(p for p in players if p.name == name).hand
-                for i, card in enumerate(my_hand):
-                    if card.color == "Blue":
-                        color = BLUE
-                    elif card.color == "Yellow":
-                        color = YELLOW
-                    elif card.color == "Green":
-                        color = GREEN
-                    else:
-                        color = BLACK
-                    pygame.draw.rect(screen, color, (110 + 90 * i, 660, 80, 80))
-                    my_card_text_surface = font.render(card.city_name, True, WHITE)
-                    screen.blit(my_card_text_surface, dest=(110 + 90*i, 660))
-
-                for i, player in enumerate(filter(lambda p: p.name != name,players)):
-                    curr_offsets[i] = lerp(curr_offsets[i], end_offsets[i], 0.1)
-                    text_surface = font.render(str(player.name), True, (255,255,255))
-                    screen.blit(text_surface, dest=(curr_offsets[i] + 550, 70 + 120*i))
-                    pygame.draw.rect(screen, (255,255,255), (curr_offsets[i] + 600, 50 + 120*i, 400, 100))
-                    for j, card in enumerate(player.hand):
-                        if card.color == "Blue":
-                            color = BLUE
-                        elif card.color == "Yellow":
-                            color = YELLOW
-                        elif card.color == "Green":
-                            color = GREEN
-                        else:
-                            color = BLACK
-                        pygame.draw.rect(screen, color, (curr_offsets[i] + 620 + 90 * j, 60 + 120*i, 80, 80))
-                        card_text_surface = font.render(card.city_name, True, (100, 100, 100))
-                        screen.blit(card_text_surface, dest=(curr_offsets[i] + 620 + 90 * j, 60 + 120*i))
-
-                for node in game_state.city_nodes:
-                    x, y = NODEPOSITIONS[node.city_name]
-                    pygame.draw.circle(screen, WHITE, (x, y), 5)
-                    text_surface = font.render(node.city_name, True, WHITE)
-                    screen.blit(text_surface, dest=(x+10, y+10))
-                draw_neighbors(screen, game_state.city_nodes[0], set())
-
-            pygame.display.flip()
+            self.scene.update(server_state)
+            self.scene.draw()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    if mouse_in_button: conn.send_message(self.socket, b'start')
-
-                    if game_state.is_game_mode:
-                        for i, player in enumerate(filter(lambda p: p.name != name,players)):
-                            if mouse_x > 550 and mouse_y > 50 + 120*i and mouse_y < 50 + 120*i + 100:
-                                end_offsets[i] = 0 if end_offsets[i] == 400 else 400
 
 if __name__ == '__main__':
     ip = 'localhost'
-    name = input('enter your name')
+    name = input('enter your name: ')
     client = Client(ip, name)
