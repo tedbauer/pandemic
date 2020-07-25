@@ -19,7 +19,7 @@ class WindowRectangle(Sprite):
 
 
 class Text(Sprite):
-    def __init__(self, text, x, y, size, bold=False, hidden=False):
+    def __init__(self, x, y, size, text="", bold=False, hidden=False):
         super().__init__()
 
         self.text = text
@@ -50,7 +50,7 @@ class Text(Sprite):
             self.new_text = None
 
         # TODO: only blit/fill if needed
-        if self.hidden: 
+        if self.hidden:
             self.image.fill(BLACK)
         else:
             self.image.fill(BLACK)
