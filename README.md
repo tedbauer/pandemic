@@ -9,7 +9,7 @@ Install dependencies:
 
 ## Run the Game
 
-Run the server:
+Run the server locally:
 
 	$ python -m server
 
