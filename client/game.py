@@ -20,18 +20,6 @@ color_map = {
 
 class Game(Scene):
 
-    def create_cities(self, root_city, city_group, visited_acc):
-        if root_city in visited_acc:
-            return
-
-        x, y = random.randint(0, 600), random.randint(0, 600)
-        city_group.add(City(x, y, color_map[root_city.color.lower()], root_city.city_name, None))
-        visited_acc.add(root_city.city_name)
-
-        for neighbor in root_city.neighbors:
-            create_cities(neighbor, city_group, visited_acc)
-
-
     def __init__(self, screen, channel, initial_state):
         Scene.__init__(self, screen)
 
@@ -39,9 +27,9 @@ class Game(Scene):
         self.channel = channel
 
         city_group = Group()
-        visited = set()
-        print("init was called")
-        self.create_cities(initial_state.city_nodes[0], city_group, visited)
+        for city_node in initial_state.city_nodes:
+            x, y = random.randint(0, 600), random.randint(0, 600)
+            city_group.add(City(x, y, color_map[city_node.color.lower()], city_node.city_name, None))
 
         self.groups.append(city_group)
 
