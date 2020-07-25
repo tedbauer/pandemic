@@ -19,7 +19,7 @@ class WindowRectangle(Sprite):
 
 
 class Text(Sprite):
-    def __init__(self, x, y, size, text="", bold=False, hidden=False):
+    def __init__(self, x=100, y=100, size=20, text="", bold=False, hidden=False):
         super().__init__()
 
         self.text = text
@@ -42,7 +42,7 @@ class Text(Sprite):
     def set_hidden(self, new_hidden):
         self.hidden = new_hidden
 
-    def update(self, s):
+    def update(self, s, events):
         if self.new_text:
             self.text = self.new_text
             self.text_surface = self.font.render(self.text, 1, WHITE)
@@ -59,9 +59,11 @@ class Text(Sprite):
 
 
 class Button(Sprite):
-    def __init__(self, x, y, text):
+    def __init__(self, x=50, y=50, text="", action=lambda arg: None, arg=None):
         super().__init__()
 
+        self.action = action
+        self.arg = arg
         self.color = GREY
 
         self.font = pygame.font.Font(pygame.font.get_default_font(), 25)
@@ -74,9 +76,12 @@ class Button(Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = x, y
 
-    def update(self, s):
+    def update(self, s, events):
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.color = GREEN
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.action(self.arg)
         else:
             self.color = GREY
         self.image.fill(self.color)

@@ -1,3 +1,4 @@
+from threading import Lock
 from socket import socket, AF_INET, SOCK_STREAM
 
 import jsonpickle
@@ -9,12 +10,16 @@ class ServerChannel:
         self.socket = socket(AF_INET, SOCK_STREAM)
         self.socket.connect((ip, port))
 
+        self.send_message_lock = Lock()
+
     def read_new_state(self):
-        conn.send_message(self.socket, b'read')
+        with self.send_message_lock:
+            conn.send_message(self.socket, b'read')
         return jsonpickle.decode(conn.receive_message(self.socket))
 
     def join_lobby(self, name):
-        conn.send_message(self.socket, b'joinlobby|' + name.encode())
+        with self.send_message_lock:
+            conn.send_message(self.socket, b'joinlobby|' + name.encode())
         response = conn.receive_message(self.socket).decode()
         if response == "toomanyplayers":
             print("too many players have already joined this lobby")
@@ -25,4 +30,6 @@ class ServerChannel:
             print("unknown response from server: " + response)
             exit(1)
 
-    def request_game_start(self): pass
+    def request_game_start(self):
+        with self.send_message_lock:
+            conn.send_message(self.socket, b'start')

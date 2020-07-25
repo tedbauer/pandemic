@@ -11,6 +11,8 @@ WHITE  = (255, 255, 255)
 
 BULLET_POINT_UNICODE = u'\u2022'
 
+
+
 class Lobby(Scene):
     def __init__(self, screen, channel, player_name):
         Scene.__init__(self, screen)
@@ -25,7 +27,9 @@ class Lobby(Scene):
             Text(50, 100, 25, text="Lobby")
         ])
 
-        self.button_group = Group(Button(50, 210, "Start game"))
+        self.button_group = Group(
+            Button(x=50, y=210, text="Start game", action=lambda arg: self.channel.request_game_start(), arg=None)
+        )
 
         self.player_names_group = Group(
             [Text(x=50, y=130 + 20 * i, size=15, hidden=True) for i in range(4)]
@@ -37,9 +41,10 @@ class Lobby(Scene):
 
         self.channel.join_lobby(player_name)
 
-    def update(self, server_state):
+    def update(self, server_state, events):
+        Scene.update(self, server_state, events)
+
         self.screen.fill(BLACK)
-        Scene.update(self, server_state)
 
         player_names = list(map(lambda p: p.name, server_state.players))
         for i, name in enumerate(player_names):

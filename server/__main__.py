@@ -6,8 +6,7 @@ import jsonpickle
 from shared import conn
 from shared import gamestate
 
-# deal cards to beginning players
-# 2-4 players; each player gets a deck of cards
+
 
 state_lock = Lock()
 state = gamestate.GameState()
@@ -23,29 +22,38 @@ class ClientThread(Thread):
         while True:
             try:
                 message = conn.receive_message(self.conn)
+                if message.decode() != "read":
+                    print("received message: " + message.decode())
                 if message.decode() == "start" and not state.is_game_mode:
                     with state_lock:
+                        print("grabbed lock to start the game")
                         gamestate.start_game(state)
+                    print("released lock")
                 elif message.decode().startswith("joinlobby"):
                     self.player_name = message.decode()[10:]
                     print("message received: " + message.decode())
                     too_many_players = False
                     with state_lock:
+                        print("grabbed lock to join lobby")
                         if len(state.players) < 4:
                             gamestate.add_player(state, gamestate.Player(self.player_name))
                             conn.send_message(self.conn, b'lobbyjoinsuccess')
                         else:
                             too_many_players = True
+                    print("released lock")
                     if too_many_players:
                             conn.send_message(self.conn, b'toomanyplayers')
                 elif message.decode() == "read":
                     with state_lock:
                         conn.send_message(self.conn, jsonpickle.encode(state).encode())
+                else:
+                    print("message not understood.")
             except conn.ConnectionClosed:
                 with state_lock:
+                    print("grabbed lock")
                     player = next(p for p in state.players if p.name == str(self.player_name))
                     gamestate.remove_player(state, player)
-
+                print("released lock")
 class Server:
     def __init__(self):
         PORT = 1066  # assigned randomly, any number of 1032

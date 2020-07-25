@@ -7,8 +7,11 @@ class ConnectionClosed(Exception): pass
 
 def send_message(socket, message):
     msg_length = len(message)
+    print("msg length:" + str(msg_length))
     socket.sendall(struct.pack("!I", msg_length))
+    print("sent msg size" + str(msg_length))
     socket.sendall(message)
+    print("sent message..." + str(msg_length))
 
 def receive_message(socket):
     num_size_bytes_recvd = 0

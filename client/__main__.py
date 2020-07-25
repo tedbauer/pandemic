@@ -4,6 +4,7 @@ import pygame
 
 from client.server_channel import ServerChannel
 from client.lobby import Lobby
+from client.game import Game
 
 if __name__ == '__main__':
     ip = 'localhost'
@@ -15,18 +16,13 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((1000, 800))
     channel = ServerChannel(ip, 1066)
 
-
-    print("initialized server channel")
     scene = Lobby(screen, channel, name)
-
-    print("initialized lobby")
+    game_started = False
 
     server_state = channel.read_new_state()
 
     state_fetch_executor = ThreadPoolExecutor(max_workers=1)
     state_fetch_future = state_fetch_executor.submit(channel.read_new_state)
-
-    print("here now...")
 
     running = True
     while running:
@@ -34,12 +30,15 @@ if __name__ == '__main__':
             server_state = state_fetch_future.result()
             state_fetch_future = state_fetch_executor.submit(channel.read_new_state)
 
-        print("here now")
+        if server_state.is_game_mode and not game_started:
+            scene = Game(screen, channel, server_state)
+            game_started = True
 
-        scene.update(server_state)
+        events = pygame.event.get()
+        scene.update(server_state, events)
         scene.draw()
 
-        for event in pygame.event.get():
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
 

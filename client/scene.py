@@ -5,8 +5,8 @@ class Scene:
         self.groups = []
         self.screen = screen
 
-    def update(self, server_state):
-        for group in self.groups: group.update(server_state)
+    def update(self, server_state, events):
+        for group in self.groups: group.update(server_state, events)
 
     def draw(self):
         for group in self.groups:
