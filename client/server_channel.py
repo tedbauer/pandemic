@@ -1,6 +1,8 @@
 from socket import socket, AF_INET, SOCK_STREAM
-import conn
+
 import jsonpickle
+
+from shared import conn
 
 class ServerChannel:
     def __init__(self, ip, port):

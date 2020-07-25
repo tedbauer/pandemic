@@ -1,18 +1,11 @@
-import conn
-import socket
-import pygame
-import jsonpickle
-import random
-
-import queue
-
-from client_objects import City
 from concurrent.futures import ThreadPoolExecutor
-from server_channel import ServerChannel
 
-from ui import MessageBox, Button
-
+import pygame
 from pygame.sprite import Group
+
+from client.server_channel import ServerChannel
+from client.ui import MessageBox, Button
+
 
 BLUE   = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -54,6 +47,7 @@ class Lobby(Scene):
         Scene.update(self, server_state)
 
         self.players = list(map(lambda p: p.name, server_state.players))
+        print(self.players)
 
 
 class Client:

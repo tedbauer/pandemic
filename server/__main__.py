@@ -1,10 +1,10 @@
-import conn
-import random
-import csv
-import socket
-import jsonpickle
 from threading import Thread, Lock
-import gamestate
+import socket
+
+import jsonpickle
+
+from shared import conn
+from shared import gamestate
 
 # deal cards to beginning players
 # 2-4 players; each player gets a deck of cards
