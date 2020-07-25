@@ -11,8 +11,8 @@ Install dependencies:
 
 Run the server:
 
-	$ python server.py
+	$ python -m server
 
 Run up to four clients:
 
-	$ python client.py
+	$ python -m client

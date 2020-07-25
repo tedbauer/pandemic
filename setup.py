@@ -8,4 +8,8 @@ setup(
         "console_scripts": ["run-server = server.__main__"],
         "gui_scripts": ["run-client = client.__main__"],
     },
+    install_requires=[
+        "pygame",
+        "jsonpickle"
+    ]
 )
