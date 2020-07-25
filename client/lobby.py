@@ -46,7 +46,7 @@ class Lobby(Scene):
         player_names = list(map(lambda p: p.name, server_state.players))
         for i, name in enumerate(player_names):
             self.player_names_group.sprites()[i].set_hidden(False)
-            self.player_names_group.sprites()[i].set_text(name)
+            self.player_names_group.sprites()[i].set_text(BULLET_POINT_UNICODE + " " + name)
 
         print(player_names)
         print(list(range(3, len(player_names) - 1, -1)))
