@@ -29,8 +29,15 @@ class ClientThread(Thread):
                 elif message.decode().startswith("joinlobby"):
                     self.player_name = message.decode()[10:]
                     print("message received: " + message.decode())
+                    too_many_players = False
                     with state_lock:
-                        gamestate.add_player(state, gamestate.Player(self.player_name))
+                        if len(state.players) < 4:
+                            gamestate.add_player(state, gamestate.Player(self.player_name))
+                            conn.send_message(self.conn, b'lobbyjoinsuccess')
+                        else:
+                            too_many_players = True
+                    if too_many_players:
+                            conn.send_message(self.conn, b'toomanyplayers')
                 elif message.decode() == "read":
                     with state_lock:
                         conn.send_message(self.conn, jsonpickle.encode(state).encode())

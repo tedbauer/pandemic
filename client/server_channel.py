@@ -15,5 +15,14 @@ class ServerChannel:
 
     def join_lobby(self, name):
         conn.send_message(self.socket, b'joinlobby|' + name.encode())
+        response = conn.receive_message(self.socket).decode()
+        if response == "toomanyplayers":
+            print("too many players have already joined this lobby")
+            exit(0)
+        elif response == "lobbyjoinsuccess":
+            print("joined lobby")
+        else:
+            print("unknown response from server: " + response)
+            exit(1)
 
     def request_game_start(self): pass

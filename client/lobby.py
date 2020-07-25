@@ -31,11 +31,17 @@ class Lobby(Scene):
         self.groups.append(self.button_group)
         self.groups.append(self.player_names_group)
 
+        print("sending msg about joinin the lobby")
+
         self.channel.join_lobby(player_name)
+
+        print("lobby initialized")
 
     def update(self, server_state):
         self.screen.fill(BLACK)
         Scene.update(self, server_state)
+
+        print("updating lobby")
 
         player_names = list(map(lambda p: p.name, server_state.players))
         for i, name in enumerate(player_names):
