@@ -48,3 +48,7 @@ class Lobby(Scene):
             self.player_names_group.sprites()[i].set_hidden(False)
             self.player_names_group.sprites()[i].set_text(name)
 
+        print(player_names)
+        print(list(range(3, len(player_names) - 1, -1)))
+        for i in range(3, len(player_names) - 1, -1):
+            self.player_names_group.sprites()[i].set_hidden(True)
