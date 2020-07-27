@@ -11,7 +11,7 @@ if __name__ == '__main__':
     name = input('enter your name: ')
 
     pygame.init()
-
+    pygame.display.set_caption("Pandemic")
 
     screen = pygame.display.set_mode((1000, 800))
     channel = ServerChannel(ip, 1066)
