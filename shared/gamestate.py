@@ -6,6 +6,7 @@ class Card:
         self.color = color
         self.city_name = city_name
 
+
 class CityNode:
     def __init__(self, city_name, color):
         self.color = color
@@ -25,15 +26,18 @@ class Deck:
         self.deck.remove(card)
         return card
 
+
 class Player:
     def __init__(self, name):
         self.name = name
         self.hand = []
         self.role =[]
 
+
 class RoleCard:
     def __init__(self, role_type):
         self.role_type = role_type
+
 
 class RoleCardDeck:
     def __init__(self):
@@ -46,6 +50,7 @@ class RoleCardDeck:
         self.role.remove(r)
         return r
 
+
 class GameState:
     def __init__(self):
         self.players = [] # list of Player objects
@@ -53,6 +58,7 @@ class GameState:
         self.is_game_mode = False
         self.deck = Deck()
         self.rolecarddeck = RoleCardDeck()
+
 
 def add_player(state, player):
     state.players.append(player)
@@ -82,5 +88,3 @@ def start_game(state):
         for row in reader:
             citymap[row[0]].neighbors.append(citymap[row[1]])
             citymap[row[1]].neighbors.append(citymap[row[0]])
-
-
