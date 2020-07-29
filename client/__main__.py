@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pygame
 
+from client.chat_channel import ChatChannel
 from client.server_channel import ServerChannel
 from client.lobby import Lobby
 from client.game import Game
@@ -15,10 +16,11 @@ if __name__ == '__main__':
 
     screen = pygame.display.set_mode((1000, 800))
     channel = ServerChannel(ip, 1066)
+    chat_channel = ChatChannel(ip, 1099)
 
     server_state = channel.read_new_state()
 
-    scene = Lobby(screen, channel, server_state, name)
+    scene = Lobby(screen, channel, chat_channel, server_state, name)
     game_started = False
 
     state_fetch_executor = ThreadPoolExecutor(max_workers=1)

@@ -33,3 +33,7 @@ class ServerChannel:
     def request_game_start(self):
         with self.send_message_lock:
             conn.send_message(self.socket, b'start')
+
+    def send_chat_msg(self, name, msg):
+        with self.send_message_lock:
+            conn.send_message(self.socket, b'chat|' + name.encode() + b'|' + msg.encode())

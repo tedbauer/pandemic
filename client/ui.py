@@ -18,10 +18,12 @@ class WindowRectangle(Sprite):
         self.rect.topleft = x, y
 
 class InputTextBox(Sprite):
-    def __init__(self, x=100, y=100, size=20, place_holder=""):
+    def __init__(self, x=100, y=100, size=20, place_holder="", action=lambda x:None):
         super().__init__()
 
+        self.place_holder = place_holder
         self.text = ""
+        self.action = action
         self.active = False
 
         self.font = pygame.font.Font(pygame.font.get_default_font(), size)
@@ -41,6 +43,7 @@ class InputTextBox(Sprite):
             for event in events:
                 if event.type == pygame.KEYDOWN and self.active:
                     if event.key == pygame.K_RETURN:
+                        self.action(self.text)
                         self.text = ""
                     else:
                         self.text += event.unicode
@@ -51,19 +54,23 @@ class InputTextBox(Sprite):
                         self.active = False
 
         self.image.fill(WHITE)
-        self.text_surface = self.font.render(self.text, 1, BLACK)
+        if self.active:
+            self.text_surface = self.font.render(self.text, 1, BLACK)
+        else:
+            self.text_surface = self.font.render(self.place_holder, 1, GREY)
         self.image.blit(self.text_surface, (0, 0))
 
 
 class Text(Sprite):
-    def __init__(self, x=100, y=100, size=20, text="", bold=False, hidden=False):
+    def __init__(self, x=100, y=100, size=20, text="", bold=False, hidden=False, color=WHITE):
         super().__init__()
 
         self.text = text
         self.hidden = hidden
+        self.color = color
 
         self.font = pygame.font.Font(pygame.font.get_default_font(), size)
-        self.text_surface = self.font.render(text, 1, WHITE)
+        self.text_surface = self.font.render(text, 1, self.color)
 
         self.image = pygame.Surface(self.text_surface.get_size(), pygame.SRCALPHA)
 
@@ -88,7 +95,7 @@ class Text(Sprite):
     def update(self, s, events):
         if self.new_text:
             self.text = self.new_text
-            self.text_surface = self.font.render(self.text, 1, WHITE)
+            self.text_surface = self.font.render(self.text, 1, self.color)
             self.image = pygame.Surface(self.text_surface.get_size(), pygame.SRCALPHA)
             self.new_text = None
 
@@ -97,7 +104,7 @@ class Text(Sprite):
             self.image.fill(BLACK)
         else:
             self.image.fill(BLACK)
-            self.text_surface = self.font.render(self.text, 1, WHITE)
+            self.text_surface = self.font.render(self.text, 1, self.color)
             self.image.blit(self.text_surface, (0, 0))
 
 

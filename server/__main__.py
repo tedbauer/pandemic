@@ -11,6 +11,8 @@ from shared import gamestate
 state_lock = Lock()
 state = gamestate.GameState()
 
+chat_connections = []
+
 class ClientThread(Thread):
     def __init__(self, conn, addr):
         Thread.__init__(self)
@@ -22,6 +24,12 @@ class ClientThread(Thread):
         while True:
             try:
                 message = conn.receive_message(self.conn)
+                if message.decode().startswith("chat"):
+                    chat_msg = message.decode()[5:]
+                    name = chat_msg[:chat_msg.find("|")-1]
+                    msg = chat_msg[chat_msg.find("|")+1:]
+                    for c in chat_connections:
+                        conn.send_message(c, name.encode() + b": " + msg.encode())
                 if message.decode() != "read":
                     print("received message: " + message.decode())
                 if message.decode() == "start" and not state.is_game_mode:
@@ -60,9 +68,13 @@ class Server:
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # opening a TCP connection
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
         s.bind(('', PORT))  # telling the socket to use our host and port that we specified
         s.listen()  # only allowing one connection
+
+        chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        chat_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        chat_socket.bind(('', 1099))
+        chat_socket.listen()
 
         print("listening on port " + str(PORT))
 
@@ -70,6 +82,8 @@ class Server:
         threads = []
         while not state.is_game_mode:
             conn, addr = s.accept()
+            chat_conn, chat_addr = chat_socket.accept()
+            chat_connections.append(chat_conn)
             print("Connection formed" + str(conn))
             t = ClientThread(conn, addr)
             t.start()
