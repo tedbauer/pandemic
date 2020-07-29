@@ -2,6 +2,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from pygame.sprite import Group
+from pygame import Rect
+import pygame
 
 from client.scene import Scene
 from client.ui import MessageBox, Button, Text, InputTextBox
@@ -22,6 +24,10 @@ class Chat():
         self.group = Group()
         self.screen = screen
         self.messages = []
+        self.log_top = 300
+        self.scrollbar_height = 300
+        self.scrollbar_y = 10
+        self.message_offset = 0
 
     def add_message(self, msg_text, msg_color=WHITE):
         now = datetime.now()
@@ -30,8 +36,16 @@ class Chat():
         for message in self.messages:
             message.set_xy((message.get_xy()[0], message.get_xy()[1] - 50))
         t = Text(x=300, y=300, size=25, text=msg, color=msg_color)
+
         self.group.add(t)
         self.messages.append(t)
+        self.log_top = self.messages[0].get_xy()[1]
+        if self.log_top < 0:
+            total_log_space = -self.log_top + 300
+            self.scrollbar_height = (300 / total_log_space) * 300
+        else:
+            self.scrollbar_height = 300
+        self.scrollbar_y = 310 - self.scrollbar_height
 
 
     def update(self, server_state, events):
@@ -48,6 +62,32 @@ class Chat():
             self.players = updated_players
         self.group.update(server_state, events)
 
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 4 and self.scrollbar_y > 10:
+                    self.scrollbar_y -= 10
+                    self.message_offset = -abs(self.scrollbar_y)
+                elif event.button == 5 and self.scrollbar_y + self.scrollbar_height < 300:
+                    self.scrollbar_y += 10
+                    self.message_offset = abs(self.scrollbar_y)
+
+                if self.scrollbar_y < 10:
+                    self.scrollbar_y = 10
+                    self.message_offset = 0
+                if self.scrollbar_y > 300:
+                    self.scrollbar_y = 300
+                    self.message_offset = 0
+
+                log_height = 300 - self.log_top
+                print("log height: " + str(log_height))
+                print("scrollbar_y: " + str(self.scrollbar_y))
+                print("message offset:" + str(self.message_offset))
+                for message in self.messages:
+                    print(message.get_xy())
+                    message.set_xy((message.get_xy()[0], message.get_xy()[1] + self.message_offset))
+
+
+        pygame.draw.rect(self.screen, WHITE, Rect(800, self.scrollbar_y, 30, self.scrollbar_height))
 
 class Lobby(Scene):
     def __init__(self, screen, channel, chat_channel, initial_state, player_name):
