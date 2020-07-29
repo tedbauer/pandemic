@@ -12,9 +12,39 @@ WHITE  = (255, 255, 255)
 BULLET_POINT_UNICODE = u'\u2022'
 
 
+class Chat():
+
+    def __init__(self, initial_state, screen):
+        self.players = set([player.name for player in initial_state.players])
+        self.group = Group()
+        self.screen = screen
+        self.messages = []
+
+    def add_message(self, msg_text):
+        for message in self.messages:
+            message.set_xy((message.get_xy()[0], message.get_xy()[1] - 50))
+        t = Text(x=300, y=300, size=25, text=msg_text)
+        self.group.add(t)
+        self.messages.append(t)
+
+
+    def update(self, server_state, events):
+        updated_players = set([player.name for player in server_state.players])
+        if updated_players != self.players:
+            new_players = updated_players.difference(self.players)
+            for player_name in new_players:
+                self.add_message(player_name + " joined the lobby.")
+
+            lost_players = self.players.difference(updated_players)
+            for player_name in lost_players:
+                self.add_message(player_name + " quit.")
+
+            self.players = updated_players
+        self.group.update(server_state, events)
+
 
 class Lobby(Scene):
-    def __init__(self, screen, channel, player_name):
+    def __init__(self, screen, channel, initial_state, player_name):
         Scene.__init__(self, screen)
 
         self.channel = channel
@@ -39,12 +69,16 @@ class Lobby(Scene):
         self.groups.append(self.button_group)
         self.groups.append(self.player_names_group)
 
+        self.chat = Chat(initial_state, screen)
+        self.groups.append(self.chat.group)
+
         self.channel.join_lobby(player_name)
 
     def update(self, server_state, events):
         Scene.update(self, server_state, events)
 
         self.screen.fill(BLACK)
+        self.chat.update(server_state, events)
 
         player_names = list(map(lambda p: p.name, server_state.players))
         for i, name in enumerate(player_names):

@@ -36,6 +36,12 @@ class Text(Sprite):
 
         self.new_text = None
 
+    def get_xy(self):
+        return self.rect.topleft
+
+    def set_xy(self, xy):
+        self.rect.topleft = xy
+
     def set_text(self, new_text):
         self.new_text = new_text
 

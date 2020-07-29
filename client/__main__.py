@@ -16,10 +16,10 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((1000, 800))
     channel = ServerChannel(ip, 1066)
 
-    scene = Lobby(screen, channel, name)
-    game_started = False
-
     server_state = channel.read_new_state()
+
+    scene = Lobby(screen, channel, server_state, name)
+    game_started = False
 
     state_fetch_executor = ThreadPoolExecutor(max_workers=1)
     state_fetch_future = state_fetch_executor.submit(channel.read_new_state)
