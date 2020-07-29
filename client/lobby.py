@@ -1,7 +1,7 @@
 from pygame.sprite import Group
 
 from client.scene import Scene
-from client.ui import MessageBox, Button, Text
+from client.ui import MessageBox, Button, Text, InputTextBox
 
 BLUE   = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -53,8 +53,8 @@ class Lobby(Scene):
         screen.fill(GREEN)
 
         self.header_group = Group([
-            Text(50, 50, 40, text="Pandemic"),
-            Text(50, 100, 25, text="Lobby")
+            Text(x=50, y=50, size=40, text="Pandemic"),
+            Text(x=50, y=100, size=25, text="Lobby")
         ])
 
         self.button_group = Group(
@@ -65,9 +65,12 @@ class Lobby(Scene):
             [Text(x=50, y=130 + 20 * i, size=15, hidden=True) for i in range(4)]
         )
 
+        self.chat_group = Group(InputTextBox(x=300, y=350, size=20))
+
         self.groups.append(self.header_group)
         self.groups.append(self.button_group)
         self.groups.append(self.player_names_group)
+        self.groups.append(self.chat_group)
 
         self.chat = Chat(initial_state, screen)
         self.groups.append(self.chat.group)

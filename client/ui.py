@@ -17,6 +17,43 @@ class WindowRectangle(Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = x, y
 
+class InputTextBox(Sprite):
+    def __init__(self, x=100, y=100, size=20, place_holder=""):
+        super().__init__()
+
+        self.text = ""
+        self.active = False
+
+        self.font = pygame.font.Font(pygame.font.get_default_font(), size)
+        self.text_surface = self.font.render(self.text, 1, BLACK)
+
+        self.image = pygame.Surface((200, 25), pygame.SRCALPHA)
+
+        self.image.blit(self.text_surface, (0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = x, y
+
+    def update(self, s, events):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_BACKSPACE]:
+            self.text = self.text[:-1]
+        else:
+            for event in events:
+                if event.type == pygame.KEYDOWN and self.active:
+                    if event.key == pygame.K_RETURN:
+                        self.text = ""
+                    else:
+                        self.text += event.unicode
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.rect.collidepoint(pygame.mouse.get_pos()):
+                        self.active = True
+                    else:
+                        self.active = False
+
+        self.image.fill(WHITE)
+        self.text_surface = self.font.render(self.text, 1, BLACK)
+        self.image.blit(self.text_surface, (0, 0))
+
 
 class Text(Sprite):
     def __init__(self, x=100, y=100, size=20, text="", bold=False, hidden=False):
