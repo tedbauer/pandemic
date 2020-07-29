@@ -18,18 +18,19 @@ class WindowRectangle(Sprite):
         self.rect.topleft = x, y
 
 class InputTextBox(Sprite):
-    def __init__(self, x=100, y=100, size=20, place_holder="", action=lambda x:None):
+    def __init__(self, x=100, y=100, size=20, place_holder="", action=lambda x:None, bg=BLACK):
         super().__init__()
 
         self.place_holder = place_holder
         self.text = ""
         self.action = action
         self.active = False
+        self.bg = bg
 
         self.font = pygame.font.Font(pygame.font.get_default_font(), size)
-        self.text_surface = self.font.render(self.text, 1, BLACK)
+        self.text_surface = self.font.render(self.text, 1, bg)
 
-        self.image = pygame.Surface((200, 25), pygame.SRCALPHA)
+        self.image = pygame.Surface((470, 25), pygame.SRCALPHA)
 
         self.image.blit(self.text_surface, (0, 0))
         self.rect = self.image.get_rect()
@@ -55,19 +56,20 @@ class InputTextBox(Sprite):
 
         self.image.fill(WHITE)
         if self.active:
-            self.text_surface = self.font.render(self.text, 1, BLACK)
+            self.text_surface = self.font.render(self.text, 1, self.bg)
         else:
             self.text_surface = self.font.render(self.place_holder, 1, GREY)
         self.image.blit(self.text_surface, (0, 0))
 
 
 class Text(Sprite):
-    def __init__(self, x=100, y=100, size=20, text="", bold=False, hidden=False, color=WHITE):
+    def __init__(self, x=100, y=100, size=20, text="", bold=False, hidden=False, color=WHITE, bg=BLACK):
         super().__init__()
 
         self.text = text
         self.hidden = hidden
         self.color = color
+        self.bg = bg
 
         self.font = pygame.font.Font(pygame.font.get_default_font(), size)
         self.text_surface = self.font.render(text, 1, self.color)
@@ -101,9 +103,9 @@ class Text(Sprite):
 
         # TODO: only blit/fill if needed
         if self.hidden:
-            self.image.fill(BLACK)
+            self.image.fill(self.bg)
         else:
-            self.image.fill(BLACK)
+            self.image.fill(self.bg)
             self.text_surface = self.font.render(self.text, 1, self.color)
             self.image.blit(self.text_surface, (0, 0))
 

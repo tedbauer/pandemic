@@ -13,6 +13,8 @@ YELLOW = (255, 255, 0)
 GREEN  = (0, 255, 0)
 BLACK  = (0, 0, 0)
 WHITE  = (255, 255, 255)
+GREY   = (192, 192, 192)
+
 
 BULLET_POINT_UNICODE = u'\u2022'
 
@@ -28,14 +30,15 @@ class Chat():
         self.scrollbar_height = 300
         self.scrollbar_y = 10
         self.message_offset = 0
+        self.chat_window = pygame.Surface((470, 330))
 
     def add_message(self, msg_text, msg_color=WHITE):
         now = datetime.now()
         timestamp = now.strftime("%I:%M %p")
         msg = "(" + timestamp + ") " + msg_text
         for message in self.messages:
-            message.set_xy((message.get_xy()[0], message.get_xy()[1] - 50))
-        t = Text(x=300, y=300, size=25, text=msg, color=msg_color)
+            message.set_xy((message.get_xy()[0], message.get_xy()[1] - 20))
+        t = Text(x=300, y=300, size=15, text=msg, color=msg_color, bg=GREY)
 
         self.group.add(t)
         self.messages.append(t)
@@ -66,27 +69,23 @@ class Chat():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4 and self.scrollbar_y > 10:
                     self.scrollbar_y -= 10
-                    self.message_offset = -abs(self.scrollbar_y)
                 elif event.button == 5 and self.scrollbar_y + self.scrollbar_height < 300:
                     self.scrollbar_y += 10
-                    self.message_offset = abs(self.scrollbar_y)
 
                 if self.scrollbar_y < 10:
                     self.scrollbar_y = 10
-                    self.message_offset = 0
                 if self.scrollbar_y > 300:
                     self.scrollbar_y = 300
-                    self.message_offset = 0
 
                 log_height = 300 - self.log_top
+                self.message_offset = (1 - ((self.scrollbar_y + self.scrollbar_height ) / 300)) * log_height
+
                 print("log height: " + str(log_height))
                 print("scrollbar_y: " + str(self.scrollbar_y))
                 print("message offset:" + str(self.message_offset))
-                for message in self.messages:
-                    print(message.get_xy())
-                    message.set_xy((message.get_xy()[0], message.get_xy()[1] + self.message_offset))
-
-
+        self.chat_window.fill(GREY)
+        for message in self.messages:
+            self.chat_window.blit(message.image, (0, message.rect.y + self.message_offset))
         pygame.draw.rect(self.screen, WHITE, Rect(800, self.scrollbar_y, 30, self.scrollbar_height))
 
 class Lobby(Scene):
@@ -125,7 +124,6 @@ class Lobby(Scene):
         self.groups.append(self.chat_group)
 
         self.chat = Chat(initial_state, screen)
-        self.groups.append(self.chat.group)
 
         self.channel.join_lobby(player_name)
 
@@ -147,3 +145,8 @@ class Lobby(Scene):
 
         for i in range(3, len(player_names) - 1, -1):
             self.player_names_group.sprites()[i].set_hidden(True)
+
+    def draw(self):
+        for message in self.chat.messages:
+            self.screen.blit(self.chat.chat_window, (300, 10))
+        Scene.draw(self)
