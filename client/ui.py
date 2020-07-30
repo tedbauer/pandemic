@@ -30,7 +30,7 @@ class InputTextBox(Sprite):
         self.font = pygame.font.Font(pygame.font.get_default_font(), size)
         self.text_surface = self.font.render(self.text, 1, bg)
 
-        self.image = pygame.Surface((470, 25), pygame.SRCALPHA)
+        self.image = pygame.Surface((510, 25), pygame.SRCALPHA)
 
         self.image.blit(self.text_surface, (0, 0))
         self.rect = self.image.get_rect()

@@ -14,6 +14,7 @@ GREEN  = (0, 255, 0)
 BLACK  = (0, 0, 0)
 WHITE  = (255, 255, 255)
 GREY   = (192, 192, 192)
+DARK_GREY = (212, 208, 203)
 
 
 BULLET_POINT_UNICODE = u'\u2022'
@@ -26,11 +27,11 @@ class Chat():
         self.group = Group()
         self.screen = screen
         self.messages = []
-        self.log_top = 300
-        self.scrollbar_height = 300
-        self.scrollbar_y = 10
+        self.log_top = 380
+        self.scrollbar_height = 330
+        self.scrollbar_y = 125
         self.message_offset = 0
-        self.chat_window = pygame.Surface((470, 330))
+        self.chat_window = pygame.Surface((510, 330))
 
     def add_message(self, msg_text, msg_color=WHITE):
         now = datetime.now()
@@ -45,10 +46,10 @@ class Chat():
         self.log_top = self.messages[0].get_xy()[1]
         if self.log_top < 0:
             total_log_space = -self.log_top + 300
-            self.scrollbar_height = (300 / total_log_space) * 300
+            self.scrollbar_height = (330 / total_log_space) * 330
         else:
-            self.scrollbar_height = 300
-        self.scrollbar_y = 310 - self.scrollbar_height
+            self.scrollbar_height = 330
+        self.scrollbar_y = 455 - self.scrollbar_height
 
 
     def update(self, server_state, events):
@@ -64,21 +65,22 @@ class Chat():
 
             self.players = updated_players
         self.group.update(server_state, events)
+        print(self.scrollbar_y)
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4 and self.scrollbar_y > 10:
                     self.scrollbar_y -= 10
-                elif event.button == 5 and self.scrollbar_y + self.scrollbar_height < 300:
+                elif event.button == 5 and self.scrollbar_y + self.scrollbar_height < 455:
                     self.scrollbar_y += 10
 
-                if self.scrollbar_y < 10:
-                    self.scrollbar_y = 10
-                if self.scrollbar_y > 300:
-                    self.scrollbar_y = 300
+                if self.scrollbar_y < 125:
+                    self.scrollbar_y = 125
+                if self.scrollbar_y > 455:
+                    self.scrollbar_y = 455
 
-                log_height = 300 - self.log_top
-                self.message_offset = (1 - ((self.scrollbar_y + self.scrollbar_height ) / 300)) * log_height
+                log_height = 330 - self.log_top
+                self.message_offset = (1 - ((self.scrollbar_y + self.scrollbar_height ) / 330)) * log_height
 
                 print("log height: " + str(log_height))
                 print("scrollbar_y: " + str(self.scrollbar_y))
@@ -86,7 +88,6 @@ class Chat():
         self.chat_window.fill(GREY)
         for message in self.messages:
             self.chat_window.blit(message.image, (0, message.rect.y + self.message_offset))
-        pygame.draw.rect(self.screen, WHITE, Rect(800, self.scrollbar_y, 30, self.scrollbar_height))
 
 class Lobby(Scene):
     def __init__(self, screen, channel, chat_channel, initial_state, player_name):
@@ -103,20 +104,20 @@ class Lobby(Scene):
         self.chat_fetch_future = self.chat_fetch_executor.submit(chat_channel.get_chat_message)
 
         self.header_group = Group([
-            Text(x=50, y=50, size=40, text="Pandemic"),
-            Text(x=50, y=100, size=25, text="Lobby")
+            Text(x=50, y=50, size=40, text="Pandemic", bg=DARK_GREY),
+            Text(x=50, y=115, size=25, text="Lobby", bg=DARK_GREY)
         ])
 
         self.button_group = Group(
-            Button(x=50, y=210, text="Start game", action=lambda arg: self.channel.request_game_start(), arg=None)
+            Button(x=50, y=470, text="Start game", action=lambda arg: self.channel.request_game_start(), arg=None)
         )
 
         self.player_names_group = Group(
-            [Text(x=50, y=130 + 20 * i, size=15, hidden=True) for i in range(4)]
+            [Text(x=50, y=150 + 20 * i, size=15, bg=DARK_GREY, hidden=True) for i in range(4)]
         )
 
         send_msg_action = lambda msg: self.channel.send_chat_msg(self.player_name, msg)
-        self.chat_group = Group(InputTextBox(x=300, y=350, size=20, action=send_msg_action, place_holder="Enter message here"))
+        self.chat_group = Group(InputTextBox(x=380, y=470, size=20, action=send_msg_action, place_holder="Enter message here"))
 
         self.groups.append(self.header_group)
         self.groups.append(self.button_group)
@@ -147,6 +148,10 @@ class Lobby(Scene):
             self.player_names_group.sprites()[i].set_hidden(True)
 
     def draw(self):
+        pygame.draw.rect(self.screen, DARK_GREY, Rect(45, 45, 900, 50))
+        pygame.draw.rect(self.screen, DARK_GREY, Rect(45, 110, 300, 400))
+        pygame.draw.rect(self.screen, DARK_GREY, Rect(365, 110, 580, 400))
+        pygame.draw.rect(self.screen, WHITE, Rect(900, self.chat.scrollbar_y, 30, self.chat.scrollbar_height))
         for message in self.chat.messages:
-            self.screen.blit(self.chat.chat_window, (300, 10))
+            self.screen.blit(self.chat.chat_window, (380, 125))
         Scene.draw(self)
